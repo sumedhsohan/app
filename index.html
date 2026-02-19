@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>30 Day Diet Tracker</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Segoe UI',sans-serif;
+}
+
+/* 🌈 Animated background */
+body{
+  background:linear-gradient(-45deg,#667eea,#764ba2,#6b73ff,#000dff);
+  background-size:400% 400%;
+  animation:bgMove 12s ease infinite;
+  display:flex;
+  justify-content:center;
+  min-height:100vh;
+}
+
+@keyframes bgMove{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+
+/* ✨ Glass container */
+.container{
+  width:95%;
+  max-width:1000px;
+  margin:20px;
+  padding:22px;
+  background:rgba(255,255,255,0.12);
+  backdrop-filter:blur(18px);
+  border-radius:22px;
+  box-shadow:0 0 50px rgba(0,0,0,0.35);
+  color:white;
+  animation:fadeIn .8s ease;
+}
+
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(20px)}
+  to{opacity:1; transform:translateY(0)}
+}
+
+h1{
+  text-align:center;
+  margin-bottom:20px;
+}
+
+/* 📊 Progress bar */
+.progress-bar{
+  height:26px;
+  background:rgba(255,255,255,0.18);
+  border-radius:20px;
+  overflow:hidden;
+  margin-bottom:22px;
+}
+
+.progress-fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#00ffd0,#00ff88,#00ffd0);
+  background-size:200% 100%;
+  animation:shine 3s linear infinite;
+  transition:width .4s ease;
+}
+
+@keyframes shine{
+  0%{background-position:0%}
+  100%{background-position:200%}
+}
+
+/* 📅 Day card */
+.day{
+  background:rgba(255,255,255,0.14);
+  padding:16px;
+  border-radius:16px;
+  margin-bottom:18px;
+  transition:.35s;
+}
+
+.day:hover{
+  transform:scale(1.02);
+  box-shadow:0 0 25px rgba(0,255,200,.6);
+}
+
+/* 🧾 Task */
+.task{
+  margin:10px 0;
+  padding:12px;
+  border-radius:12px;
+  background:rgba(255,255,255,0.1);
+  transition:.3s;
+}
+
+.task.completed{
+  background:rgba(0,255,120,0.25);
+  box-shadow:0 0 18px #00ff99;
+}
+
+/* ☑ Checkbox */
+.task input[type="checkbox"]{
+  appearance:none;
+  width:22px;height:22px;
+  border:2px solid white;
+  border-radius:6px;
+  cursor:pointer;
+  margin-right:8px;
+  position:relative;
+  transition:.3s;
+}
+
+.task input[type="checkbox"]:checked{
+  background:#00ff99;
+  border-color:#00ff99;
+  box-shadow:0 0 12px #00ff99;
+  transform:scale(1.15);
+}
+
+.task input[type="checkbox"]:checked::after{
+  content:"✔";
+  color:black;
+  position:absolute;
+  font-size:14px;
+  left:4px; top:-1px;
+  font-weight:bold;
+}
+
+/* ⏰ time */
+input[type="time"]{
+  padding:4px 6px;
+  border-radius:6px;
+  border:none;
+  margin-left:8px;
+}
+
+/* 📸 Hide real file input */
+input[type="file"]{
+  display:none;
+}
+
+/* 🎨 Animated upload button */
+.upload-btn{
+  display:inline-block;
+  margin-top:8px;
+  padding:6px 14px;
+  border-radius:10px;
+  font-size:14px;
+  cursor:pointer;
+  color:white;
+  background:linear-gradient(135deg,#00ffd0,#00ff88);
+  box-shadow:0 0 10px rgba(0,255,170,0.6);
+  transition:all .3s ease;
+  position:relative;
+  overflow:hidden;
+}
+
+.upload-btn:hover{
+  transform:scale(1.05);
+  box-shadow:0 0 18px #00ffcc,0 0 25px #00ff88;
+}
+
+.upload-btn:active{
+  transform:scale(0.95);
+}
+
+/* ✨ Shine sweep */
+.upload-btn::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:-100%;
+  width:100%;
+  height:100%;
+  background:linear-gradient(120deg,transparent,rgba(255,255,255,.6),transparent);
+  transition:.6s;
+}
+
+.upload-btn:hover::before{
+  left:100%;
+}
+
+/* 🖼 Image preview */
+img{
+  margin-top:6px;
+  max-width:120px;
+  border-radius:10px;
+  display:block;
+  box-shadow:0 0 10px rgba(0,0,0,.4);
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>🥗 30 Day Diet Tracker</h1>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <div id="days"></div>
+</div>
+
+<script>
+const DAILY_TASKS=[
+  "Empty stomach: Warm water + lemon OR 5 soaked almonds + 2 walnuts",
+  "Vegetable upma",
+  "Eat one fruit: Apple OR Guava OR Papaya",
+  "3 multigrain roti meal",
+  "Black coffee",
+  "2 multigrain roti meal"
+];
+
+const daysContainer=document.getElementById("days");
+
+function loadData(){
+  return JSON.parse(localStorage.getItem("dietData"))||{};
+}
+
+function saveData(data){
+  localStorage.setItem("dietData",JSON.stringify(data));
+}
+
+function updateProgress(){
+  const checkboxes=document.querySelectorAll("input[type='checkbox']");
+  const checked=[...checkboxes].filter(c=>c.checked).length;
+  const percent=Math.round((checked/checkboxes.length)*100);
+  document.getElementById("progressFill").style.width=percent+"%";
+}
+
+function createTracker(){
+  const data=loadData();
+
+  for(let d=1; d<=30; d++){
+    const dayDiv=document.createElement("div");
+    dayDiv.className="day";
+    dayDiv.innerHTML=`<h2>Day ${d}</h2>`;
+
+    DAILY_TASKS.forEach((task,t)=>{
+      const key=`day${d}_task${t}`;
+      data[key]=data[key]||{};
+
+      const taskDiv=document.createElement("div");
+      taskDiv.className="task";
+
+      const checkbox=document.createElement("input");
+      checkbox.type="checkbox";
+      checkbox.checked=data[key].checked||false;
+
+      if(checkbox.checked) taskDiv.classList.add("completed");
+
+      checkbox.onchange=()=>{
+        data[key].checked=checkbox.checked;
+        saveData(data);
+        taskDiv.classList.toggle("completed",checkbox.checked);
+        updateProgress();
+      };
+
+      const label=document.createElement("label");
+      label.textContent=" "+task;
+
+      const timeInput=document.createElement("input");
+      timeInput.type="time";
+      timeInput.value=data[key].time||"";
+      timeInput.onchange=()=>{
+        data[key].time=timeInput.value;
+        saveData(data);
+      };
+
+      const fileInput=document.createElement("input");
+      fileInput.type="file";
+      fileInput.accept="image/*";
+      fileInput.id=`file-${d}-${t}`;
+
+      const uploadLabel=document.createElement("label");
+      uploadLabel.className="upload-btn";
+      uploadLabel.htmlFor=fileInput.id;
+      uploadLabel.textContent="📸 Upload Photo";
+
+      const img=document.createElement("img");
+      if(data[key].photo) img.src=data[key].photo;
+
+      fileInput.onchange=()=>{
+        const file=fileInput.files[0];
+        const reader=new FileReader();
+
+        reader.onload=e=>{
+          img.src=e.target.result;
+          data[key].photo=e.target.result;
+          saveData(data);
+        };
+
+        if(file) reader.readAsDataURL(file);
+      };
+
+      taskDiv.appendChild(checkbox);
+      taskDiv.appendChild(label);
+      taskDiv.appendChild(timeInput);
+      taskDiv.appendChild(document.createElement("br"));
+      taskDiv.appendChild(fileInput);
+      taskDiv.appendChild(uploadLabel);
+      taskDiv.appendChild(img);
+
+      dayDiv.appendChild(taskDiv);
+    });
+
+    daysContainer.appendChild(dayDiv);
+  }
+
+  updateProgress();
+}
+
+createTracker();
+</script>
+
+</body>
+</html>
